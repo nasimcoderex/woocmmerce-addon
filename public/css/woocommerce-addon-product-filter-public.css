@@ -1,0 +1,36 @@
+.product-filters-container ul {
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 20px;
+    display: flex; /* Arrange items horizontally */
+    flex-wrap: wrap; /* Allow wrapping to next line */
+    gap: 10px; /* Space between filter items */
+}
+.product-filters-container ul li {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.product-filters-container ul li a {
+    text-decoration: none;
+    color: #333;
+}
+.product-filters-container ul li.active-filter { /* Style for the active filter */
+    background-color: #0073aa;
+    border-color: #0073aa;
+}
+.product-filters-container ul li.active-filter a {
+    color: #fff;
+}
+.product-filters-container .clear-filter-link { /* Style for the clear filter link */
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #a00;
+    text-decoration: underline;
+}
+.product-filters-wrapper h3 { /* Basic styling for the title */
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
