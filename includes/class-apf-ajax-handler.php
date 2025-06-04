@@ -47,9 +47,19 @@
          * Handles product filtering and returns updated product list and pagination.
          */
         public function filter_products_callback() {
-            check_ajax_referer( 'apf_filter_nonce', 'nonce' );
+            error_log("APF AJAX: filter_products_callback triggered.");
+            error_log("APF AJAX: POST data: " . print_r($_POST, true));
 
-            $raw_filters = isset( $_POST['filters'] ) ? json_decode( stripslashes( $_POST['filters'] ), true ) : array();
+            check_ajax_referer( 'apf_filter_nonce', 'nonce' );
+            error_log("APF AJAX: Nonce check passed.");
+
+            $raw_filters_json = isset( $_POST['filters'] ) ? stripslashes( $_POST['filters'] ) : '{}';
+            $raw_filters = json_decode( $raw_filters_json, true );
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                error_log("APF AJAX: JSON decode error for filters: " . json_last_error_msg());
+                wp_send_json_error(array('message' => 'Invalid filter data format.'));
+                return;
+            }
 
             $sanitized_filters = array();
             if (!empty($raw_filters) && is_array($raw_filters)) {
@@ -85,58 +95,51 @@
                     $max_p = isset($raw_filters['price_range']['max']) ? floatval($raw_filters['price_range']['max']) : null;
 
                     if ($min_p !== null || $max_p !== null) {
-                        // Get WooCommerce min/max price limits to ensure submitted values are not out of global bounds
-                        // This is a simplified way; a more robust way might involve querying actual min/max of all products.
                         $wc_min_price = 0;
-                        // $wc_max_price = a very large number or dynamically queried max product price.
-                        // For now, just basic validation.
-
-                        $current_min_p = ($min_p === null) ? $wc_min_price : $min_p;
-                        $current_max_p = ($max_p === null) ? null : $max_p; // null can mean no upper limit for WC query
+                        // Default min to 0, max to a very high number if not set by user.
+                        // JS logic should ideally send values only if slider is touched.
+                        $current_min_p = ($min_p === null || $min_p === '') ? 0 : floatval($min_p);
+                        $current_max_p = ($max_p === null || $max_p === '') ? PHP_INT_MAX : floatval($max_p);
 
                         if ($current_min_p < 0) $current_min_p = 0;
-                        if ($current_max_p !== null && $current_max_p < $current_min_p) $current_max_p = $current_min_p;
+                        // Ensure max is not less than min, unless max is PHP_INT_MAX (no upper limit)
+                        if ($current_max_p < $current_min_p && $current_max_p !== PHP_INT_MAX) {
+                             $current_max_p = $current_min_p;
+                        }
 
                         $sanitized_filters['price_range']['min'] = $current_min_p;
-                        if ($current_max_p !== null) { // Only set max_price if it's not "no upper limit"
-                           $sanitized_filters['price_range']['max'] = $current_max_p;
-                        }
+                        $sanitized_filters['price_range']['max'] = $current_max_p; // Always set max, even if PHP_INT_MAX
                     }
                 }
                 // Sanitize Rating
                 if (isset($raw_filters['rating']) && !empty($raw_filters['rating'])) {
                      $rating_filters = array_values(array_filter(array_map('absint', (array)$raw_filters['rating']), function($r) { return $r > 0 && $r <= 5; }));
-                     if (!empty($rating_filters)) $sanitized_filters['rating'] = $rating_filters; // Store as array
+                     if (!empty($rating_filters)) $sanitized_filters['rating'] = $rating_filters;
                 }
             }
             $this->active_filters = $sanitized_filters;
             $this->current_page = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
             if ($this->current_page < 1) $this->current_page = 1;
 
+            error_log("APF AJAX: Sanitized Filters: " . print_r($this->active_filters, true));
+            error_log("APF AJAX: Current Page: " . $this->current_page);
+
             add_action( 'woocommerce_product_query', array( $this, 'modify_wc_query_action' ) );
 
-            // Set 'paged' for the main query, WC will use it
             set_query_var( 'paged', $this->current_page );
-
-            // Get the standard WooCommerce query args to ensure consistency
-            // This is important if themes or other plugins modify the main shop query.
-            // However, for a direct AJAX call, we might construct args more directly.
-            // For now, let's stick to a new WP_Query and use wc_set_loop_prop.
 
             $args = array(
                 'post_type'      => 'product',
                 'post_status'    => 'publish',
                 'posts_per_page' => wc_get_loop_prop( 'posts_per_page', apply_filters( 'loop_shop_per_page', get_option( 'posts_per_page' ) ) ),
                 'paged'          => $this->current_page,
-                // 'wc_query'       => 'product_query', // This is used by WC to identify the main query, not strictly needed for new WP_Query here
-                                                   // but our hook 'woocommerce_product_query' implies we are modifying a WC main query.
-                                                   // For AJAX, it's cleaner to build the query and then display results.
             );
 
             $products_query = new WP_Query( $args );
 
-            // Set WooCommerce loop properties for the new query
-            // These are important for woocommerce_pagination() and woocommerce_result_count()
+            error_log("APF AJAX: Final WP_Query args after modify_wc_query_action hook (from \$products_query->query_vars): " . print_r($products_query->query_vars, true));
+
+
             wc_set_loop_prop( 'current_page', $this->current_page );
             wc_set_loop_prop( 'is_paginated', $products_query->max_num_pages > 1 );
             wc_set_loop_prop( 'page_template', get_page_template_slug() );
@@ -144,11 +147,9 @@
             wc_set_loop_prop( 'total', $products_query->found_posts );
             wc_set_loop_prop( 'total_pages', $products_query->max_num_pages );
 
-            // For functions like woocommerce_result_count() to work with a custom query,
-            // we might need to temporarily set the global $wp_query.
             global $wp_query;
-            $original_wp_query = $wp_query; // Backup original query
-            $wp_query = $products_query; // Set global $wp_query to our custom query
+            $original_wp_query = $wp_query;
+            $wp_query = $products_query;
 
             ob_start();
             if ( $products_query->have_posts() ) {
@@ -162,6 +163,7 @@
                 wc_no_products_found();
             }
             $products_html = ob_get_clean();
+            // error_log("APF AJAX: Products HTML length: " . strlen($products_html)); // To check if HTML is generated
 
             ob_start();
             woocommerce_result_count();
@@ -171,7 +173,7 @@
             woocommerce_pagination();
             $pagination_html = ob_get_clean();
 
-            $wp_query = $original_wp_query; // Restore original query
+            $wp_query = $original_wp_query;
             wp_reset_postdata();
 
             remove_action( 'woocommerce_product_query', array( $this, 'modify_wc_query_action' ) );
@@ -180,13 +182,13 @@
                 'products_html'     => $products_html,
                 'pagination_html'   => $pagination_html,
                 'result_count_html' => $result_count_html,
+                // 'debug_filters' => $this->active_filters // Optionally send back for JS console
             ) );
         }
 
         public function modify_wc_query_action( $q ) {
-            // Ensure we are modifying the main query if this hook is used more broadly,
-            // but for this AJAX context, $q is our new WP_Query object's query vars.
-            // if ( ! $q->is_main_query() ) return; // Not strictly needed here as we pass $q from new WP_Query
+            error_log("APF AJAX: modify_wc_query_action called. Initial query vars: " . print_r($q->query_vars, true));
+            error_log("APF AJAX: Active filters for query modification: " . print_r($this->active_filters, true));
 
             $tax_query = $q->get('tax_query');
             if (!is_array($tax_query)) $tax_query = array();
@@ -219,90 +221,67 @@
                         'taxonomy' => $key,
                         'field'    => 'term_id',
                         'terms'    => $values,
-                        'operator' => 'IN', // TODO: Make operator configurable (AND/OR) per attribute in admin
+                        'operator' => 'IN',
                     );
                 }
             }
 
             if ( ! empty( $this->active_filters['stock_status'] ) ) {
-                // Assuming single stock status selection or that WC handles array of stock statuses.
-                // If multiple selected, 'compare' should be 'IN'. Here, we assume one or all.
-                // For simplicity, if 'outofstock' is selected, we show only outofstock.
-                // If 'instock' is selected, we show only instock.
-                // If both, it's like no filter unless handled by specific logic.
-                // WC typically handles 'instock' by default if 'hide_out_of_stock_items' is set.
-                // This explicit filter is for user choice.
                 $meta_query[] = array(
                     'key'     => '_stock_status',
-                    'value'   => $this->active_filters['stock_status'], // This should be an array if multiple are allowed from JS
-                    'compare' => is_array($this->active_filters['stock_status']) ? 'IN' : '=',
+                    'value'   => (array) $this->active_filters['stock_status'], // Ensure it's an array
+                    'compare' => 'IN', // Always use IN for consistency
                 );
             }
 
+            // Price Range Filter: Rely on WooCommerce's internal price filter hooks by setting query vars
             if ( isset( $this->active_filters['price_range'] ) ) {
-                // WooCommerce's price filter hook 'woocommerce_product_query_price_filter' handles this
-                // by looking at _min_price and _max_price query vars.
-                $price_meta_query = array(
-                    'key' => '_price',
-                    'type' => 'DECIMAL(10,2)', // Ensure numeric comparison
-                    'compare' => 'BETWEEN',
-                    'value' => array( $this->active_filters['price_range']['min'], $this->active_filters['price_range']['max'] )
-                );
-                 // Check if a price meta query already exists to avoid conflicts (e.g. from WC itself)
-                $price_key_exists = false;
-                foreach($meta_query as $mq_item){
-                    if(isset($mq_item['key']) && $mq_item['key'] === '_price'){
-                        $price_key_exists = true;
-                        break;
-                    }
+                if (isset($this->active_filters['price_range']['min'])) {
+                    $q->set( 'min_price', $this->active_filters['price_range']['min'] );
                 }
-                if(!$price_key_exists){
-                    $meta_query[] = $price_meta_query;
-                } else {
-                    // If price filter is already set by WC (e.g. via shortcode attributes),
-                    // we might need to decide whether to override or merge.
-                    // For now, we assume direct control via our AJAX.
-                    // To ensure our filter takes precedence if WC also adds one based on URL:
-                    $q->set('min_price', $this->active_filters['price_range']['min']);
-                    $q->set('max_price', $this->active_filters['price_range']['max']);
+                if (isset($this->active_filters['price_range']['max']) && $this->active_filters['price_range']['max'] < PHP_INT_MAX) {
+                    // Only set max_price if it's not our placeholder for "no upper limit"
+                    $q->set( 'max_price', $this->active_filters['price_range']['max'] );
+                }
+                 // Ensure WooCommerce knows a price filter is active if either min or max is meaningfully set.
+                if ( (isset($this->active_filters['price_range']['min']) && $this->active_filters['price_range']['min'] > 0) ||
+                     (isset($this->active_filters['price_range']['max']) && $this->active_filters['price_range']['max'] < PHP_INT_MAX) ) {
+                    $q->set('price_filter', true);
                 }
             }
 
             if ( ! empty( $this->active_filters['rating'] ) ) {
-                // Assuming rating filter means "at least X stars".
-                // If multiple ratings selected (e.g. "3 stars & up" AND "4 stars & up"), take the lowest.
                 $min_rating = min( $this->active_filters['rating'] );
                 $meta_query[] = array(
-                    'key'     => '_wc_average_rating', // Stored as meta
+                    'key'     => '_wc_average_rating',
                     'value'   => $min_rating,
                     'compare' => '>=',
                     'type'    => 'DECIMAL(3,2)',
                 );
-                 // WooCommerce also adds its own rating filter if `rating_filter` is in tax_query.
-                 // To avoid conflict, we use meta_query directly.
             }
 
-            // Set 'relation' for tax_query if multiple taxonomies are queried
-            if (count(array_filter(array_keys($tax_query), 'is_numeric')) > 1 && !isset($tax_query['relation'])) {
-                $tax_query['relation'] = 'AND'; // TODO: Make this configurable in admin (AND/OR for different taxonomies)
+            $numeric_tax_queries = array_filter(array_keys($tax_query), 'is_numeric');
+            if (count($numeric_tax_queries) > 1 && !isset($tax_query['relation'])) {
+                $tax_query['relation'] = 'AND';
             }
 
-            // Set 'relation' for meta_query if multiple meta conditions are added
-            if (count(array_filter(array_keys($meta_query), 'is_numeric')) > 1 && !isset($meta_query['relation'])) {
+            $numeric_meta_queries = array_filter(array_keys($meta_query), 'is_numeric');
+            if (count($numeric_meta_queries) > 1 && !isset($meta_query['relation'])) {
                 $meta_query['relation'] = 'AND';
             }
 
-            if (!empty($tax_query) && count($tax_query) > (isset($tax_query['relation']) ? 1:0) ) {
+            if (!empty($numeric_tax_queries) ) { // Only set if there are actual tax queries
                  $q->set('tax_query', $tax_query);
             } else {
-                 $q->set('tax_query', array()); // Clear if only relation is set
+                 $q->set('tax_query', array());
             }
 
-            if (!empty($meta_query) && count($meta_query) > (isset($meta_query['relation']) ? 1:0) ) {
+            if (!empty($numeric_meta_queries) ) { // Only set if there are actual meta queries
                 $q->set('meta_query', $meta_query);
             } else {
-                $q->set('meta_query', array()); // Clear if only relation is set
+                $q->set('meta_query', array());
             }
+            error_log("APF AJAX: Modified query vars: " . print_r($q->query_vars, true));
         }
 
     }

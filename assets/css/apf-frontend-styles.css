@@ -1,154 +1,176 @@
-/* Basic container styling */
+/* General APF Container */
 .apf-filters-container {
-    margin-bottom: 20px;
-    padding: 15px;
     border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-sizing: border-box; /* Ensures padding/border don't add to width */
+    width: 100%;
 }
 .apf-filters-container h3 { /* For the main "Filter Products" title */
     margin-top: 0;
-    margin-bottom: 15px; /* Added margin for separation */
+    margin-bottom: 20px;
+    font-size: 1.4em; /* Example: slightly larger title */
 }
+
+/* Filter Group Styling */
 .apf-filter-group {
-    margin-bottom: 15px;
-    padding-bottom: 10px; /* Added padding for separation */
-    border-bottom: 1px dotted #eee; /* Separator line */
+    margin-bottom: 20px; /* Increased spacing */
+    padding-bottom: 15px;
+    border-bottom: 1px dotted #eee;
 }
-.apf-filter-group:last-child {
-    border-bottom: none; /* No border for the last group */
-    margin-bottom: 0; /* No bottom margin for the last group if actions are separate */
-}
-.apf-filter-group h4 { /* For individual filter group titles e.g. "Product Categories" */
-    margin-top: 0; /* Reset top margin */
-    margin-bottom: 8px;
-    font-size: 1em; /* Keep consistent with widget titles potentially */
-}
-.apf-filter-group ul {
-    list-style-type: none;
-    padding-left: 0;
+.apf-filter-group:last-of-type { /* Use last-of-type for more robustness */
+    border-bottom: none;
     margin-bottom: 0;
 }
-.apf-filter-group ul li {
-    margin-bottom: 5px;
+.apf-filter-group h4 {
+    font-size: 1.1em;
+    margin-top: 0;
+    margin-bottom: 12px; /* Increased spacing */
 }
+
+/* Checkbox/Radio Lists */
+.apf-filter-list { /* Applies to ul elements in checkbox-filter.php */
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+.apf-filter-list li {
+    margin-bottom: 8px;
+    /* display: flex; already handled by label if needed */
+    /* align-items: center; */
+}
+/* Target labels within filter groups for consistent styling */
 .apf-filter-group label {
     font-weight: normal;
-    display: flex; /* Align checkbox/radio and text nicely */
-    align-items: center; /* Align items vertically */
+    display: flex;
+    align-items: center;
+    margin-bottom: 0; /* Override potential theme defaults */
+    width: 100%;
 }
 .apf-filter-group input[type="checkbox"],
 .apf-filter-group input[type="radio"] {
-    margin-right: 8px; /* Increased margin */
-    margin-top:0; /* Reset margin if needed */
-    flex-shrink: 0; /* Prevent shrinking if label text is long */
+    margin-right: 8px;
+    margin-top: 0; /* Reset default browser/theme margins */
+    flex-shrink: 0;
 }
-.apf-filter-actions {
-    margin-top: 20px; /* Increased margin */
-    padding-top: 15px; /* Added padding */
-    border-top: 1px solid #e0e0e0; /* Separator line */
+.apf-filter-list label { /* More specific selector for list item labels */
+    justify-content: space-between;
+}
+.apf-count {
+    font-size: 0.9em;
+    color: #777;
+    margin-left: 5px;
 }
 
-/* Styles for Price Range Slider (based on WooCommerce default for compatibility) */
+/* Dropdown Styling */
+.apf-filter-select { /* Class for select elements in dropdown-filter.php */
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background-color: #fff; /* Explicit background */
+    line-height: 1.5; /* Improve readability */
+}
+
+/* Price Slider Styles */
 .apf-filter-group-price-range .price_slider_wrapper {
     position: relative;
-    margin-bottom: 1em; /* Space for price_label */
+    margin-bottom: 1em;
 }
 .apf-filter-group-price-range .apf-price-slider-range.price_slider {
-    width: calc(100% - 0px); /* Full width */
-    height: .5em; /* WC default height */
-    background-color: #e0e0e0; /* Track color */
+    width: 100%;
+    height: .5em;
+    background-color: #e0e0e0;
     border-radius: .25em;
-    margin-bottom: 1em; /* Space for price_label */
+    margin-bottom: 1em;
 }
 .apf-filter-group-price-range .ui-slider-handle {
-    height: 1em; /* WC default */
-    width: 1em;  /* WC default */
-    background-color: #0073aa; /* Default WP Blue, or theme color */
+    height: 1.2em; /* Slightly larger for easier grabbing */
+    width: 1.2em;
+    background-color: #0073aa;
     border-radius: 50%;
-    border: 2px solid #fff; /* WC default */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2); /* WC default */
-    top: -.25em; /* WC default adjustment */
+    border: 2px solid #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    top: -.35em; /* Adjust based on new handle size */
     cursor: pointer;
     outline: none;
 }
-.apf-filter-group-price-range .ui-slider-handle:last-child {
-    /* margin-left: -1em; */ /* WC default if needed */
-}
 .apf-filter-group-price-range .ui-slider-range {
-    background-color: #0073aa; /* Default WP Blue, or theme color */
+    background-color: #0073aa;
     border-radius: .25em;
 }
-.apf-filter-group-price-range .apf-price-slider-amount.price_label {
+.apf-price-slider-amount.price_label { /* Applied to the div wrapping price display */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.875em; /* WC default */
-    color: #515151; /* WC default */
+    margin-top: 15px; /* Increased space */
+    font-size: 0.95em; /* Slightly larger */
+    color: #515151;
 }
-.apf-filter-group-price-range .apf-price-slider-amount span {
+.apf-price-slider-amount span { /* Targets .from and .to spans */
     display: inline-block;
+    padding: 4px 6px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
 }
-.apf-filter-group-price-range .apf-price-slider-amount .button {
-    float: right; /* WC default */
-    font-size: 1em; /* Ensure button is not tiny */
-    padding: 4px 8px; /* Adjust if needed */
+.apf-price-slider-amount .button {
+    margin-left: 10px;
+    /* Standard button styles will apply from theme or below */
+}
+
+/* Actions Area & Clear Filters Button */
+.apf-filter-actions {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right; /* Align button to the right */
+}
+#apf-clear-filters {
+    padding: 8px 15px;
+    text-decoration: none;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    color: #333;
+    border-radius: 3px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 0.9em; /* Match other interface elements */
     line-height: 1.5;
 }
-.apf-filter-group-price-range .apf-price-slider-amount .clear {
-    clear: both;
-}
-
-
-/* Styling for select dropdowns */
-.apf-filter-group select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: white;
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
-}
-
-/* Basic styling for clear button */
-#apf-clear-filters {
-    background: none;
-    border: none;
-    color: #0073aa; /* WordPress blue */
-    text-decoration: underline;
-    cursor: pointer;
-    padding: 0;
-    margin-top: 10px; /* Add some space if it's below other elements */
-}
 #apf-clear-filters:hover {
-    color: #005075;
+    background-color: #e0e0e0;
+    border-color: #bbb;
 }
 
-/* WooCommerce Widget Compatibility (Optional, but good for sidebar) */
-.widget .apf-filters-container {
-    padding: 0; /* Remove padding if container is the widget itself */
-    border: none; /* Remove border if container is the widget itself */
+/* WooCommerce Widget Compatibility */
+.widget.apf-filters-container, /* If the container itself is the widget */
+.widget .apf-filters-container { /* If container is inside a widget */
+    padding: 0;
+    border: none;
+    margin-bottom: 0; /* Widget handles its own bottom margin */
 }
-.widget .apf-filters-title { /* Use if h3 is inside widget */
-    /* Styles often come from widget title theme styles */
+/* Titles within widgets often have specific classes */
+.widget .apf-filters-container h3.apf-filters-title {
+    /* Usually styled by theme's widget title styles */
 }
 .widget .apf-filter-group h4 {
-    /* Styles often come from widget sub-headings or theme styles */
+    /* Usually styled by theme's widget subheading styles */
 }
 
-/* Rating filter using checkbox template - specific styling if needed */
-.apf-filter-group-rating .apf-filter-list-checkbox li label .apf-count {
-    /* Style for rating counts if displayed, e.g. hide or change appearance */
-    /* display: none; */ /* Example: Hide counts for ratings by default */
-}
-.apf-filter-group-rating .apf-filter-list-checkbox li label {
-    /* Specific styles for rating labels, e.g. to include star icons later */
+/* Rating filter specific - if needed beyond general .apf-filter-list styles */
+.apf-filter-group-rating .apf-filter-list li label .apf-count {
+     display: none; /* Example: Hide counts for ratings by default */
 }
 
 /* AJAX Loading Indicator Styles */
-.apf-products-wrap.apf-loading { /* Target a wrapper around products list */
+.apf-products-wrap.apf-loading, /* Ensure your product list wrapper has this class during load */
+ul.products.apf-loading { /* If applied directly to ul.products */
     position: relative;
-    opacity: 0.7;
-    pointer-events: none; /* Prevent interaction during load */
+    opacity: 0.6; /* Slightly more visible content underneath */
+    min-height: 200px; /* Prevent collapse during load */
+    pointer-events: none;
 }
 .apf-loader-overlay {
     position: absolute;
@@ -156,26 +178,59 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.7); /* Slightly more opaque */
-    z-index: 99999; /* Ensure it's on top */
+    background: rgba(255, 255, 255, 0.75);
+    z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 .apf-loader {
-    border: 5px solid #f3f3f3; /* Light grey */
-    border-top: 5px solid #3498db; /* Blue */
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
     border-radius: 50%;
-    width: 50px;  /* Slightly larger */
-    height: 50px; /* Slightly larger */
-    animation: apf-spin 1s linear infinite;
+    width: 50px;
+    height: 50px;
+    animation: apf-spin 0.8s linear infinite; /* Slightly faster spin */
 }
 @keyframes apf-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-/* Ensure product list itself has position relative if it's the direct target */
-/* Example: ul.products might need position: relative; if .apf-loading is applied to it directly */
-ul.products {
-    /* position: relative; */ /* Add this if apf-loading is applied directly to ul.products */
+
+/* Basic Responsiveness */
+@media (max-width: 768px) {
+    .apf-filters-container {
+        padding: 10px; /* Reduce padding on smaller screens */
+    }
+    .apf-filter-group h4 {
+        font-size: 1em; /* Adjust title size */
+    }
+    .apf-price-slider-amount {
+        flex-direction: column; /* Stack price display vertically */
+        align-items: stretch;
+    }
+    .apf-price-slider-amount span {
+        margin-bottom: 5px;
+        text-align: center;
+    }
+     .apf-price-slider-amount .button {
+        margin-left: 0;
+        margin-top: 5px;
+        width: 100%; /* Full width button */
+    }
+    .apf-filter-actions {
+        text-align: center; /* Center clear button */
+    }
+    #apf-clear-filters {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+@media (max-width: 480px) {
+    .apf-filters-container h3 {
+        font-size: 1.2em;
+    }
+    .apf-filter-list label {
+        font-size: 0.95em; /* Slightly smaller text for filter options */
+    }
 }
