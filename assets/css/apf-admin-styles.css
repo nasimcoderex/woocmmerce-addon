@@ -1,0 +1,44 @@
+/* Admin styles for Advanced Product Filters */
+.filter-display-options {
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Initially hide the display options (JS will show them) */
+/* This is a fallback if JS is disabled, but JS will manage active state */
+.filter-display-options {
+    /* display: none; */ /* JS handles this now more reliably */
+}
+
+/* Filter Order Sortable List */
+.apf-sortable-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 60%; /* Or as desired */
+    min-width: 300px; /* Ensure it's usable */
+}
+.apf-sortable-list li {
+    margin: 0 3px 3px 3px;
+    padding: 0.4em;
+    padding-left: 1.5em;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    cursor: move;
+    font-size: 1em;
+}
+.apf-sortable-list li .dashicons-move {
+    margin-right: 0.5em;
+    color: #777;
+    vertical-align: middle;
+}
+.apf-sortable-list .ui-state-highlight {
+    height: 2.5em; /* Adjusted for better visibility */
+    line-height: 1.2em;
+    background: #f0f0f0;
+    border: 1px dashed #ccc;
+}
